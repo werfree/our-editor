@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import Logo from './style/icons/logo.png'
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -18,7 +18,7 @@ function Copyright() {
     <Typography variant="body2" color="textSecondary" align="center">
       {'Copyright © '}
       <Link color="inherit" href="https://material-ui.com/">
-        Your Website
+        Our Board
       </Link>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -49,6 +49,12 @@ const useStyles = makeStyles((theme) => ({
 export default function Home() {
   const classes = useStyles();
 
+const [boardCode, setBoardCode] = useState("")
+
+const changeCodeHandler = (event)=>{
+    setBoardCode(event.target.value)
+}
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -58,74 +64,36 @@ export default function Home() {
           Our Board
         </Typography>
         <form className={classes.form} noValidate>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+          <Grid  justifyContent="center"
+  alignItems="center" container spacing={2}>
+            <Grid item xs={12}>
               <TextField
-                autoComplete="fname"
-                name="firstName"
                 variant="outlined"
                 required
                 fullWidth
-                id="firstName"
-                label="First Name"
+                id="name"
+                label="Name"
+                name="name"
+                autoComplete="name"
                 autoFocus
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                variant="outlined"
-                required
-                fullWidth
-                id="lastName"
-                label="Last Name"
-                name="lastName"
-                autoComplete="lname"
-              />
-            </Grid>
+         
             <Grid item xs={12}>
               <TextField
                 variant="outlined"
-                required
                 fullWidth
-                id="email"
-                label="Email Address"
-                name="email"
-                autoComplete="email"
+                id="code"
+                label="Enter Code"
+                name="code"
+                onChange={changeCodeHandler}
               />
             </Grid>
+           
             <Grid item xs={12}>
-              <TextField
-                variant="outlined"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type="password"
-                id="password"
-                autoComplete="current-password"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={<Checkbox value="allowExtraEmails" color="primary" />}
-                label="I want to receive inspiration, marketing promotions and updates via email."
-              />
-            </Grid>
-          </Grid>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            className={classes.submit}
-          >
-            Sign Up
-          </Button>
-          <Grid container justifyContent="flex-end">
-            <Grid item>
-              <Link href="#" variant="body2">
-                Already have an account? Sign in
-              </Link>
+            <Button fullWidth variant="outlined" color="primary" submit>
+                {boardCode?"Join Board":"Create Board"}
+            </Button>
             </Grid>
           </Grid>
         </form>

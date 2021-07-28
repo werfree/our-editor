@@ -1,14 +1,16 @@
 import React,{useState} from 'react';
+import { Redirect } from "react-router-dom";
+
 import Logo from './style/icons/logo.png'
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
+import Alert from '@material-ui/lab/Alert';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Link from '@material-ui/core/Link';
 import Grid from '@material-ui/core/Grid';
 import Box from '@material-ui/core/Box';
-//import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import axios from "axios"
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
@@ -50,10 +52,69 @@ export default function Home() {
   const classes = useStyles();
 
 const [boardCode, setBoardCode] = useState("")
+const [isLoading, setIsLoading] = useState(false)
+const [isError, setIsError] = useState({
+    error:false,
+    message:"Sayantan"
+})
+
+const [redirect, setRedirect] = useState({
+  isRedirect:false,
+  url:"",
+  props:{}
+})
+const API_URL = process.env.REACT_APP_API_URL;
 
 const changeCodeHandler = (event)=>{
     setBoardCode(event.target.value)
+    setIsError({...isError, error:false})
 }
+
+const redirectToEditor = (boardId)=>{
+    console.log(boardId);
+    setRedirect({
+      isRedirect:true,
+      url:`/editor/${boardId}`,
+      props:{}
+    })
+    console.log("b",boardId);
+}
+const onSubmitHandler = async(event)=>{
+    event.preventDefault();
+    setIsError({...isError, error:false})
+    setIsLoading(true)
+    if(!boardCode){
+        
+        axios.get(`${API_URL}generateEditorId`)
+            .then(res=>{
+                setIsLoading(false)
+                redirectToEditor(res.data.boardId);
+            }).catch((e)=>{
+                setIsLoading(false)
+                setIsError({error:true,message:e.message})
+            })
+    }
+    else{
+        axios.get(`${API_URL}validEditor/${boardCode}`)
+        .then(res=>{
+            setIsLoading(false)
+            if(res.data.valid){
+            redirectToEditor(res.data.boardId);
+            }
+            else{
+                setIsError({error:true,message:"Editor Code not valid"}) 
+            }
+        }).catch((e)=>{
+            setIsError({error:true,message:e.message})
+        })
+    }
+}
+
+  if(redirect.isRedirect){
+    return (
+      <Redirect push to={redirect.url}/>
+    )
+  }
 
   return (
     <Container component="main" maxWidth="xs">
@@ -63,6 +124,8 @@ const changeCodeHandler = (event)=>{
         <Typography component="h1" variant="h5">
           Our Board
         </Typography>
+        {isLoading && (<CircularProgress disabled={isLoading} color="secondary" />)}
+        {isError.error && (<Alert severity="error">{isError.message}</Alert>)}
         <form className={classes.form} noValidate>
           <Grid  justifyContent="center"
   alignItems="center" container spacing={2}>
@@ -89,9 +152,8 @@ const changeCodeHandler = (event)=>{
                 onChange={changeCodeHandler}
               />
             </Grid>
-           
             <Grid item xs={12}>
-            <Button fullWidth variant="outlined" color="primary" submit>
+            <Button fullWidth variant="outlined" color="primary" disabled={isLoading}  onClick={onSubmitHandler}>
                 {boardCode?"Join Board":"Create Board"}
             </Button>
             </Grid>

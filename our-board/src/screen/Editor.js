@@ -4,8 +4,9 @@ import styles from "./style/App.module.css"
 import { themeStyle } from './theme';
 import { commentForLanguage } from './utils/commentForLanguage';
 
-export default function App() {
+export default function EditorScreen({match}) {
 
+  console.log(match.params.editorId,process.env.REACT_APP_API_URL)
   const [theme, setTheme] = useState({
     editorTheme: "light",
     theme: "light"

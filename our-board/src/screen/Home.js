@@ -14,6 +14,8 @@ import axios from "axios"
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+
+import {createWebSocket} from '../utils/websocket'
 import "./style/Home.css"
 function Copyright() {
   return (
@@ -27,6 +29,8 @@ function Copyright() {
     </Typography>
   );
 }
+
+
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -52,18 +56,28 @@ export default function Home() {
   const classes = useStyles();
 
 const [boardCode, setBoardCode] = useState("")
+const [name, setName] = useState("")
 const [isLoading, setIsLoading] = useState(false)
 const [isError, setIsError] = useState({
     error:false,
     message:"Sayantan"
 })
 
+const API_URL = process.env.REACT_APP_API_URL;
+const ws = createWebSocket()
+ws.onopen=(e)=>{
+  console.log(e)
+}
+ws.onmessage = message =>{
+  console.log(JSON.parse(message.data))
+}
+
+
 const [redirect, setRedirect] = useState({
   isRedirect:false,
   url:"",
   props:{}
 })
-const API_URL = process.env.REACT_APP_API_URL;
 
 const changeCodeHandler = (event)=>{
     setBoardCode(event.target.value)
@@ -71,16 +85,31 @@ const changeCodeHandler = (event)=>{
 }
 
 const redirectToEditor = (boardId)=>{
-    console.log(boardId);
+    
     setRedirect({
       isRedirect:true,
-      url:`/editor/${boardId}`,
+      url:`/editor/${boardId}?name=${name}`,
       props:{}
     })
     console.log("b",boardId);
 }
+
+const nameHandler = (event)=>{
+  setName(event.target.value)
+  setIsError({
+    ...name,
+    error:false,
+  })
+}
 const onSubmitHandler = async(event)=>{
     event.preventDefault();
+    if(!name){
+      setIsError({
+        error:true,
+        message:"Name is required"
+      })
+      return
+    }
     setIsError({...isError, error:false})
     setIsLoading(true)
     if(!boardCode){
@@ -102,9 +131,11 @@ const onSubmitHandler = async(event)=>{
             redirectToEditor(res.data.boardId);
             }
             else{
+                setIsLoading(false)
                 setIsError({error:true,message:"Editor Code not valid"}) 
             }
         }).catch((e)=>{
+            setIsLoading(false)
             setIsError({error:true,message:e.message})
         })
     }
@@ -138,6 +169,7 @@ const onSubmitHandler = async(event)=>{
                 label="Name"
                 name="name"
                 autoComplete="name"
+                onChange={nameHandler}
                 autoFocus
               />
             </Grid>

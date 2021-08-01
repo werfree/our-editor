@@ -1,29 +1,48 @@
 import cors from "cors"
 import express from "express";
-const querystring = require('querystring');
 import * as Websocket from "ws";
-import { createClient, setNameClient } from "./utils/client";
-import { validEditor } from "./utils/editorGroup";
+import { createClient, getClient, setNameClient } from "./utils/client";
+import { addMemberToEditor, createEditor, getClientIdsForEditor, setEditorCode, validEditor } from "./utils/editorGroup";
 import generateId from "./utils/generateId";
+import { onEditorChange } from "./utils/onEditorChange";
 
 const app: express.Application = express();
+
 app.use(cors())
+app.use(express.json())
+
 app.get("/api/", (req: express.Request, res: express.Response) => {
     res.send("Our Editor Backend")
 })
 
 app.get("/api/generateEditorId", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    setTimeout(() => {
-        return res.status(200).json({
-            boardId: generateId()
-        })
-    }, 3000)
 
+    return res.status(200).json({
+        boardId: generateId()
+    })
 })
 
 app.get("/api/validEditor/:editorId", (req: express.Request, res: express.Response, next: express.NextFunction) => {
     return res.status(200).json({
         valid: validEditor(req.params.editorId)
+    })
+})
+
+app.post("/api/editor/join", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { editorId, clientId, clientName }: { editorId: string, clientId: string, clientName: string } = req.body
+    if (!editorId || !clientId || !clientName) {
+        return res.status(400).json({
+            message: "EditorId and clientId is required"
+        })
+    }
+    if (validEditor(editorId)) {
+        addMemberToEditor(editorId, clientId)
+    } else {
+        createEditor(editorId, clientId)
+    }
+    setNameClient(clientId, clientName)
+    return res.status(200).json({
+        message: "Created/JoinEditor",
     })
 })
 
@@ -33,53 +52,29 @@ const server = app.listen(process.env.PORT, () => {
 
 const wss = new Websocket.Server({ server, path: "/webSocket" });
 
-wss.on("connection", (ws: Websocket) => {
+wss.on("connection", (ws: Websocket | any) => {
     const clientId = generateId();
     createClient(clientId, ws)
     console.log(clientId, "connected")
+    ws.clientId = clientId
+    // Send Client Id
     ws.send(JSON.stringify({
         type: "clientId",
         message: "Connected",
         clientId,
         code: 200
     }))
-    setTimeout(() => {
-        ws.send(JSON.stringify({
-            type: "clientId",
-            message: "Connected",
-            clientId,
-            code: 200
-        }))
-    }, 3000)
-    ws.on('setName', (message: { clientId: string, name: string }) => {
-        console.log("In")
-        if (!message.clientId) {
-            ws.send({
-                message: "Client Id is required",
-                code: 400
-            })
-        } else if (!message.name) {
-            ws.send({
-                message: "Name is required",
-                code: 400
-            })
-        } else {
-            if (setNameClient(message.clientId, message.name)) {
-                ws.send({
-                    code: 200
-                })
-            } else {
-                ws.send({
-                    message: "User Not found, Refresh the page",
-                    code: 404
-                })
-            }
+    ws.onmessage = (message: any) => {
 
+        const parseMessage = JSON.parse(message.data)
+
+        if (parseMessage.type === "editorChange") {
+            onEditorChange(parseMessage)
         }
 
-    })
+    }
 
+    ws.onclose = (event: Websocket.CloseEvent) => {
+        console.log("Close", ws.clientId)
+    }
 })
-
-
-

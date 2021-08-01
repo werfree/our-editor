@@ -15,8 +15,9 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 
-import {createWebSocket} from '../utils/websocket'
 import "./style/Home.css"
+import { API_URL } from '../utils/apiUrl';
+
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
@@ -52,6 +53,8 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+
+
 export default function Home() {
   const classes = useStyles();
 
@@ -62,16 +65,6 @@ const [isError, setIsError] = useState({
     error:false,
     message:"Sayantan"
 })
-
-const API_URL = process.env.REACT_APP_API_URL;
-const ws = createWebSocket()
-ws.onopen=(e)=>{
-  console.log(e)
-}
-ws.onmessage = message =>{
-  console.log(JSON.parse(message.data))
-}
-
 
 const [redirect, setRedirect] = useState({
   isRedirect:false,
@@ -128,7 +121,7 @@ const onSubmitHandler = async(event)=>{
         .then(res=>{
             setIsLoading(false)
             if(res.data.valid){
-            redirectToEditor(res.data.boardId);
+            redirectToEditor(boardCode);
             }
             else{
                 setIsLoading(false)

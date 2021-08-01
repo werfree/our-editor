@@ -1,16 +1,87 @@
-import React, { useState } from 'react'
+import React, { useState,useEffect } from 'react'
 import Editor from "@monaco-editor/react";
 import styles from "./style/App.module.css"
+import { SemipolarLoading } from 'react-loadingg';
 import { themeStyle } from './theme';
 import { commentForLanguage } from './utils/commentForLanguage';
+import { Redirect } from 'react-router-dom';
+import { createWebSocket } from '../utils/websocket';
+import axios from 'axios';
+import { API_URL } from '../utils/apiUrl';
 
-export default function EditorScreen({match}) {
+export default function EditorScreen({match,location}) {
 
-  console.log(match.params.editorId,process.env.REACT_APP_API_URL)
   const [theme, setTheme] = useState({
     editorTheme: "light",
     theme: "light"
   })
+
+  const [name, setName] = useState("")
+  const [editorId, setEditorId] = useState("")
+  const [clientId,setClientId] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [webSocket,setWebSocket] = useState("")
+  const [redirect, setRedirect] = useState({
+    isRedirect:false,
+    url:""
+  })
+
+  const setUpWS=(joinEditorId,clientName)=>{
+    const ws = createWebSocket()
+    setWebSocket(ws)
+    ws.onopen=(e)=>{
+      console.log("onOpen",e)
+    }
+    ws.onerror = (e)=>{
+      console.log("onError",e)
+    }
+
+    ws.onclose=()=>{
+      console.log("close")
+    }
+    ws.onmessage = message =>{
+      message = JSON.parse(message.data)
+      
+      if(message.type==="clientId"){
+        setClientId(message.clientId)
+        console.log("clientId-:",message.clientId)
+        axios.post(`${API_URL}editor/join`,{
+          editorId:joinEditorId,
+          clientId:message.clientId,
+          clientName
+        }).then((res)=>{
+          setLoading(false)
+        }).catch(e=>{
+          console.log("joinBoard Error",e)
+        })
+      }
+
+      if(message.type==="changeEditor"){
+        const data = message.message;
+        setLanguage({
+          ...language,
+          language:data.language??language,
+          comment:`${commentForLanguage(data.language??language)}`,
+          value:data.code
+        })
+      }
+    }
+  }
+
+  useEffect(() => {
+    const editorId =   match?.params?.editorId?? "";
+    const query = new URLSearchParams(location.search)
+    const name = query.get('name')?? ""
+    console.log(editorId,name)
+    if(!editorId || !name){
+      setRedirect({isRedirect:true,url:"/"})
+    }else{
+      setEditorId(editorId)
+      setName(name)
+      setUpWS(editorId,name);
+    }
+
+  },[match,location])
 
   const [language, setLanguage] = useState({
     language: "python",
@@ -20,12 +91,22 @@ export default function EditorScreen({match}) {
 
 
   const onEditorChange = (value, event) => {
-    setLanguage({
+    setLanguage({...language,
       value:value
     })
-    console.log(event)
+    webSocket.send(JSON.stringify({
+      type:"editorChange",
+      clientId,
+      editorId,
+      code:value,
+      language:language.language
+    }))
   }
 
+  if (redirect.isRedirect)
+    return <Redirect push to={redirect.url}/>
+  if(loading)
+    return <SemipolarLoading/>
   return (
     <div style={theme.theme === "light" ? themeStyle.headerLight : themeStyle.headerDark}>
       <div className={styles.header}>
@@ -50,7 +131,13 @@ export default function EditorScreen({match}) {
               comment: `${commentForLanguage(value)}`,
               value:null
             })
-            console.log(language)
+            webSocket.send(JSON.stringify({
+              type:"editorChange",
+              clientId,
+              editorId,
+              code:null,
+              language:value
+            }))
           }}>
           <option value="c">c</option>
           <option value="cpp">cpp</option>
@@ -86,7 +173,7 @@ export default function EditorScreen({match}) {
         height="200vh"
         language={language.language}
         defaultValue={language.comment}
-        value = {language.value? language.value : language.comment}
+        value = { language.value? language.value : language.comment}
         onChange={onEditorChange}
         theme={theme.theme === "light" ? "light" : "vs-dark"}
       />

@@ -4,10 +4,11 @@ import styles from "./style/App.module.css"
 import { SemipolarLoading } from 'react-loadingg';
 import { themeStyle } from './theme';
 import { commentForLanguage } from './utils/commentForLanguage';
-import { Redirect } from 'react-router-dom';
+import { Redirect,useLocation } from 'react-router-dom';
 import { createWebSocket } from '../utils/websocket';
 import axios from 'axios';
 import { API_URL } from '../utils/apiUrl';
+import ShareButton from '../component/ShareButton';
 
 export default function EditorScreen({match,location}) {
 
@@ -67,8 +68,8 @@ export default function EditorScreen({match,location}) {
       }
     }
   }
-
   useEffect(() => {
+    console.log()
     const editorId =   match?.params?.editorId?? "";
     const query = new URLSearchParams(location.search)
     const name = query.get('name')?? ""
@@ -110,7 +111,7 @@ export default function EditorScreen({match,location}) {
   return (
     <div style={theme.theme === "light" ? themeStyle.headerLight : themeStyle.headerDark}>
       <div className={styles.header}>
-        <p style={{ marginRight: "10px" }}>Theme:</p>
+        <p style={{ marginRight: "10px",alignSelf:"center" }}>Theme:</p>
         <select style={{ marginRight: "20px" }} value={theme.theme} onChange={
           (event) => {
             const value = event.target.value;
@@ -122,7 +123,7 @@ export default function EditorScreen({match,location}) {
           <option value="light">Light</option>
 
         </select>
-        <p style={{ marginRight: "10px" }}> Language:</p>
+        <p style={{ marginRight: "10px",alignSelf:"center" }}> Language:</p>
         <select style={{ marginRight: "20px" }} value={language.language} onChange={
           (event) => {
             const value = event.target.value;
@@ -168,6 +169,7 @@ export default function EditorScreen({match,location}) {
           <option value="xml">xml</option>
           <option value="yaml">yaml</option>
         </select>
+          <ShareButton props={{text:"Share",link:`${process.env.REACT_APP_URL}?editorId=${editorId}`}}/>
       </div>
       <Editor
         height="200vh"

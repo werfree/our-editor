@@ -1,7 +1,7 @@
 import cors from "cors"
 import express from "express";
 import * as Websocket from "ws";
-import { createClient, getClient, setNameClient } from "./utils/client";
+import { createClient, deleteClient, setNameClient } from "./utils/client";
 import { addMemberToEditor, createEditor, getClientIdsForEditor, setEditorCode, validEditor } from "./utils/editorGroup";
 import generateId from "./utils/generateId";
 import { onEditorChange } from "./utils/onEditorChange";
@@ -52,7 +52,11 @@ const server = app.listen(process.env.PORT, () => {
 
 const wss = new Websocket.Server({ server, path: "/webSocket" });
 
-wss.on("connection", (ws: Websocket | any) => {
+interface myWSS extends Websocket {
+    clientId: string
+}
+
+wss.on("connection", (ws: myWSS) => {
     const clientId = generateId();
     createClient(clientId, ws)
     console.log(clientId, "connected")
@@ -76,5 +80,6 @@ wss.on("connection", (ws: Websocket | any) => {
 
     ws.onclose = (event: Websocket.CloseEvent) => {
         console.log("Close", ws.clientId)
+        deleteClient(ws.clientId)
     }
 })

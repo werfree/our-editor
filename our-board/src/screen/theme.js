@@ -1,10 +1,10 @@
-exports.themeStyle ={
-    headerDark:{
+export const themeStyle = {
+  headerDark: {
     backgroundColor: "#1E1E1E",
-    color:"#fff"
+    color: "#fff",
   },
-headerLight:{
+  headerLight: {
     backgroundColor: "#FFFF",
-    color:"#000"
-  }
-}
+    color: "#000",
+  },
+};

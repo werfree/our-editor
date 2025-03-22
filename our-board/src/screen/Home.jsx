@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 import Logo from "./style/icons/logo.png";
 import Button from "@material-ui/core/Button";
@@ -71,8 +71,11 @@ const useStyles = makeStyles((theme) => ({
 export default function Home() {
   const classes = useStyles();
 
-  const [boardCode, setBoardCode] = useState("");
-  const [name, setName] = useState("");
+  const data = useLocation();
+  const { editorId, name: shareName } = data.state || {};
+
+  const [boardCode, setBoardCode] = useState(editorId ?? "");
+  const [name, setName] = useState(shareName ?? "");
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState({
     error: false,
@@ -93,7 +96,7 @@ export default function Home() {
   const redirectToEditor = (boardId) => {
     setRedirect({
       isRedirect: true,
-      url: `/editor/${boardId}?name=${name}`,
+      url: `/editor/${boardId}`,
       props: {},
     });
     console.log("b", boardId);
@@ -148,7 +151,7 @@ export default function Home() {
   };
 
   if (redirect.isRedirect) {
-    return <Navigate push to={redirect.url} />;
+    return <Navigate state={{ name }} push to={redirect.url} />;
   }
 
   return (
@@ -171,6 +174,7 @@ export default function Home() {
             >
               <Grid item xs={12}>
                 <TextField
+                  value={name || ""}
                   variant="outlined"
                   required
                   fullWidth
@@ -185,6 +189,7 @@ export default function Home() {
 
               <Grid item xs={12}>
                 <TextField
+                  value={boardCode || ""}
                   variant="outlined"
                   fullWidth
                   id="code"

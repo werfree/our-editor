@@ -5,12 +5,11 @@ import { createClient, deleteClient, setNameClient } from "./utils/client";
 import {
   addMemberToEditor,
   createEditor,
-  getClientIdsForEditor,
-  setEditorCode,
   validEditor,
 } from "./utils/editorGroup";
 import generateId from "./utils/generateId";
 import { clientJoinedOnEditor, onEditorChange } from "./utils/onEditorChange";
+import codeRouter from "./routers/code";
 
 const app: express.Application = express();
 
@@ -64,6 +63,8 @@ app.post(
     });
   }
 );
+
+app.use("/api/code", codeRouter);
 
 const server = app.listen(process.env.PORT, () => {
   console.log(`Listing on PORT: ${process.env.PORT}`);

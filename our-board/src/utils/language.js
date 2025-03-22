@@ -31,10 +31,11 @@ export const SupportedLanguages = [
 
 export const EditorTheme = [
   {
-    name: "light",
-    value: "light",
+    displayName: "Light",
+    name: "IDLE",
+    value: "idle",
   },
-  { name: "dark", value: "vs-dark" },
+  { displayName: "Dark", value: "monokai" },
 ];
 
 export const getLanguageName = (value) => {

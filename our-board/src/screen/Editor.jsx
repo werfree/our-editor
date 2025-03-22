@@ -20,6 +20,11 @@ import ShareButton from "../component/ShareButton";
 import Logo from "../component/Logo";
 import { IoIosColorPalette as ThemeIcon } from "react-icons/io";
 import { Dropdown as FlowDropDown } from "flowbite";
+import { MdPeople } from "react-icons/md";
+import HeaderButton from "../component/HeaderButton";
+import * as Y from "yjs";
+
+const doc = new Y.Doc();
 
 export default function EditorScreen() {
   const location = useLocation();
@@ -75,7 +80,9 @@ export default function EditorScreen() {
     };
 
     ws.onclose = () => {
-      console.log("close");
+      webSocket.current = null;
+      setUpWS(editorId, name);
+      console.log("Wb socket close");
     };
     ws.onmessage = (message) => {
       message = JSON.parse(message.data);
@@ -83,7 +90,20 @@ export default function EditorScreen() {
 
       if (message.type === "clientId") {
         setClientId(message.clientId);
-        console.log("clientId-:", message.clientId);
+        console.log(
+          "clientId-:",
+          message.clientId,
+          joinEditorId ?? "eE",
+          clientName ?? "eN",
+          "ddd"
+        );
+        if (!joinEditorId || !clientName) {
+          setRedirect({
+            isRedirect: true,
+            url: "/",
+          });
+          return;
+        }
         axios
           .post(`${API_URL}editor/join`, {
             editorId: joinEditorId,
@@ -132,10 +152,12 @@ export default function EditorScreen() {
   useEffect(() => {
     if (!webSocket.current) {
       const editorId = params?.editorId ?? "";
-      const query = new URLSearchParams(location.search);
-      const name = query.get("name") ?? "";
+      const name = location.state?.name;
       console.log(editorId, name);
       if (!editorId || !name) {
+        setEditorId(editorId);
+        setName(name);
+        console.log(editorId, name);
         setRedirect({ isRedirect: true, url: "/" });
       } else {
         setEditorId(editorId);
@@ -148,17 +170,14 @@ export default function EditorScreen() {
         webSocket.current.close(1000, "Component unmounted"); // 1000 = Normal Closure
       }
     };
-  }, []);
+  }, [location]);
   useLayoutEffect(() => {
     const dropdownButton = document.getElementById("dropdownDelayButton");
     const dropdownMenu = document.getElementById("dropdownDelay");
-    console.log(dropdownButton, dropdownMenu);
 
     if (dropdownButton && dropdownMenu) {
-      console.log(dropdownButton, dropdownMenu);
       new FlowDropDown(dropdownMenu, dropdownButton);
     }
-    console.log(languageDropdownButtonRef.current, languageDropdownRef.current);
     if (languageDropdownButtonRef.current && languageDropdownRef.current) {
       new FlowDropDown(
         languageDropdownRef.current,
@@ -187,6 +206,7 @@ export default function EditorScreen() {
   }, [language?.language]);
 
   const loadTheme = async (themeName) => {
+    console.log(theme);
     if (!monacoRef.current) return;
 
     try {
@@ -204,7 +224,6 @@ export default function EditorScreen() {
 
   useEffect(() => {
     if (theme.editorTheme !== "vs-dark" && theme.editorTheme !== "light") {
-      console.log(theme);
       loadTheme(theme.theme);
     } else {
       console.log(theme, monaco);
@@ -214,6 +233,7 @@ export default function EditorScreen() {
 
   const onEditorChange = (value, event) => {
     setLanguage({ ...language, value: value });
+    console.log("onEditorChange", value, webSocket.current);
     webSocket.current.send(
       JSON.stringify({
         type: "editorChange",
@@ -233,7 +253,10 @@ export default function EditorScreen() {
     monaco.editor.setModelMarkers(model, "owner", markers);
   };
 
-  if (redirect.isRedirect) return <Navigate replace to={redirect.url} />;
+  if (redirect.isRedirect) {
+    console.log(editorId, name);
+    return <Navigate state={{ editorId, name }} replace to={redirect.url} />;
+  }
   if (loading) return <SemipolarLoading />;
   return (
     <div className="flex-1">
@@ -242,17 +265,17 @@ export default function EditorScreen() {
           <Logo />
         </div>
         <div className="flex items-center space-x-4 ">
-          <div className="">
-            <button
+          <HeaderButton>
+            <div
               id="dropdownDelayButton"
               data-dropdown-toggle="dropdownDelay"
               data-dropdown-delay="500"
               data-dropdown-trigger="hover"
-              className="#FED7AAtext-white  focus:ring-4 focus:outline-none focus:ring-transparent font-medium rounded-lg text-sm text-center inline-flex items-center dark:hover:bg-opacity-90
-            "
+              //   className="#FED7AAtext-white  focus:ring-4 focus:outline-none focus:ring-transparent font-medium rounded-lg text-sm text-center inline-flex items-center dark:hover:bg-opacity-90
+              // "
               type="button"
             >
-              <ThemeIcon size={25} color="rgb(254 215 170)" />
+              {/* <ThemeIcon size={20} color="rgb(254 215 170)" />
               <svg
                 className="w-2.5 h-2.5 ms-3 text-white"
                 aria-hidden="true"
@@ -267,85 +290,88 @@ export default function EditorScreen() {
                   strokeWidth="2"
                   d="m1 1 4 4 4-4"
                 />
-              </svg>
-            </button>
-
-            <div
-              id="dropdownDelay"
-              className="z-10  h-3/5 overflow-y-auto hidden bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700"
-            >
-              <ul
-                className="py-2 text-sm text-gray-700 dark:text-gray-200"
-                aria-labelledby="dropdownDelayButton"
-              >
-                {...EditorTheme.map((eTheme) => {
-                  return (
-                    <li id={eTheme.value}>
-                      <div
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                        onClick={() => {
-                          setTheme({
-                            theme: eTheme.name,
-                            editorTheme: eTheme.value,
-                          });
-                        }}
-                      >
-                        {eTheme.name || "ff"}
-                      </div>
-                    </li>
-                  );
-                })}
-                {Object.keys(ThemeList).map((mTheme) => {
-                  return (
-                    <li key={mTheme}>
-                      <div
-                        className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
-                        onClick={() => {
-                          monaco.editor.setTheme(mTheme);
-                          setTheme({
-                            editorTheme: mTheme,
-                            theme: ThemeList[mTheme],
-                          });
-                        }}
-                      >
-                        {ThemeList[mTheme] || "ff"}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
+              </svg> */}
+              <span className="header-button-text">Theme</span>
             </div>
-          </div>
+          </HeaderButton>
+
+          <button
+            id="dropdownDelay"
+            className="z-10  h-3/5 overflow-y-auto hidden bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700"
+          >
+            <ul
+              className="py-2 text-sm text-gray-700 dark:text-gray-200"
+              aria-labelledby="dropdownDelayButton"
+            >
+              {...EditorTheme.map((eTheme) => {
+                return (
+                  <li id={eTheme.value}>
+                    <div
+                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
+                      onClick={() => {
+                        setTheme({
+                          editorTheme: eTheme.value,
+                          theme: ThemeList[eTheme.value],
+                        });
+                      }}
+                    >
+                      {eTheme.displayName}
+                    </div>
+                  </li>
+                );
+              })}
+              {Object.keys(ThemeList).map((mTheme) => {
+                return (
+                  <li key={mTheme}>
+                    <div
+                      className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer"
+                      onClick={() => {
+                        monaco.editor.setTheme(mTheme);
+                        setTheme({
+                          editorTheme: mTheme,
+                          theme: ThemeList[mTheme],
+                        });
+                      }}
+                    >
+                      {ThemeList[mTheme] || "ff"}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </button>
 
           <div className="">
-            <button
-              id="languageDropdownDelayButton"
-              ref={languageDropdownButtonRef}
-              data-dropdown-toggle="languageDropdownDelay"
-              data-dropdown-delay="500"
-              data-dropdown-trigger="hover"
-              className="text-white  focus:ring-4 focus:outline-none focus:ring-transparent font-medium rounded-lg text-sm text-center inline-flex items-center dark:hover:bg-opacity-90
-            "
-              type="button"
-            >
-              <div className="text-base text-[#FED7AA]">{language.name}</div>
-              <svg
-                className="w-2.5 h-2.5 ms-3"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 10 6"
+            <HeaderButton>
+              <button
+                id="languageDropdownDelayButton"
+                ref={languageDropdownButtonRef}
+                data-dropdown-toggle="languageDropdownDelay"
+                data-dropdown-delay="500"
+                data-dropdown-trigger="hover"
+                //     className="text-white  focus:ring-4 focus:outline-none focus:ring-transparent font-medium rounded-lg text-sm text-center inline-flex items-center dark:hover:bg-opacity-90
+                // "
+                type="button"
               >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="m1 1 4 4 4-4"
-                />
-              </svg>
-            </button>
-
+                <span>{language.name}</span>
+                {/* <div className="text-sm text-[#FED7AA]">{language.name}</div>
+                <svg
+                  className="w-2.5 h-2.5 ms-3"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 10 6"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="m1 1 4 4 4-4"
+                  />
+                </svg> */}
+              </button>
+            </HeaderButton>
             <div
               id="languageDropdownDelay"
               ref={languageDropdownRef}
@@ -390,7 +416,8 @@ export default function EditorScreen() {
 
           <ShareButton
             props={{
-              text: "Share",
+              text: "Join",
+              image: MdPeople,
               link: `${APP_URL}?editorId=${editorId}`,
             }}
           />

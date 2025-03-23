@@ -4,6 +4,7 @@ networks:
 services:
   frontend:
     image: node:23-alpine
+    container_name: editor
     working_dir: /app
     volumes:
       - ./frontend:/app # Mount the transcode_frontend directory
@@ -21,6 +22,7 @@ services:
 
   backend:
     image: node:23-alpine
+    container_name: editor_backend
     working_dir: /app
     volumes:
       - ./backend:/app # Mount the transcode_backend directory

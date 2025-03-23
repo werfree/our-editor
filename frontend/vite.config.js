@@ -8,9 +8,28 @@ export default defineConfig({
     format: "es",
   },
   server: {
-    port: 3000, // Change if needed
+    host: "0.0.0.0",
+    port: 4173,
+    allowedHosts: ["share.werfree.fun"],
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: "true",
+        secure: false,
+      },
+      "/socket.io": {
+        target: "http://localhost:3000",
+        secure: false,
+        ws: true,
+      },
+    },
   },
   build:{
     manifest:true
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 4173,
+    allowedHosts: ["share.werfree.fun"] // ✅ Add your domain here
   }
 });

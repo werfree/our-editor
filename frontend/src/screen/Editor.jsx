@@ -245,9 +245,9 @@ export default function EditorScreen() {
 
     try {
       console.log(monacoRef.current, themeName, themeName.replaceAll(" ", "-"));
-      const themeData = await import(
-        /* @vite-ignore */ `../utils/themes/${themeName}.json`
-      );
+      const themeData = await fetch(
+        /* @vite-ignore */ `/utils/themes/${themeName}.json`
+      ).then((res) => res.json());
       const tName = themeName.replaceAll(/[^a-zA-Z0-9]/g, "");
       monacoRef.current?.monaco?.editor.defineTheme(tName, themeData);
       monacoRef.current?.monaco?.editor.setTheme(tName);
@@ -329,7 +329,9 @@ export default function EditorScreen() {
                   d="m1 1 4 4 4-4"
                 />
               </svg> */}
-              <span className="header-button-text">Theme</span>
+              <span className="header-button-text">
+                {theme.theme || "Theme"}
+              </span>
             </div>
           </HeaderButton>
 
@@ -477,7 +479,7 @@ export default function EditorScreen() {
           }}
         />
         <Snackbar
-          open={toastMessage.length}
+          open={toastMessage.length !== 0}
           message={toastMessage}
           onClose={(e) => setToastMessage("")}
           autoHideDuration={4000}

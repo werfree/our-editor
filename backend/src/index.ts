@@ -8,8 +8,13 @@ import {
   validEditor,
 } from "./utils/editorGroup";
 import generateId from "./utils/generateId";
-import { clientJoinedOnEditor, onEditorChange } from "./utils/onEditorChange";
+import {
+  clientJoinedOnEditor,
+  onEditorChange,
+} from "./utils/onEditorChange";
 import codeRouter from "./routers/code";
+import { fileURLToPath } from "url";
+import path from "path";
 
 const app: express.Application = express();
 
@@ -66,6 +71,16 @@ app.post(
 );
 
 app.use("/api/code", codeRouter);
+
+// const __filename = __;
+// const __dirname = path.dirname(__filename);
+
+app.use(express.static(path.join(__dirname, "../public")));
+
+// **✅ 4️⃣ Handle React Client-Side Routing**
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "index.html"));
+});
 
 const server = app.listen(process.env.PORT, () => {
   console.log(`Listing on PORT: ${process.env.PORT}`);

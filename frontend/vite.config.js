@@ -7,29 +7,34 @@ export default defineConfig({
   worker: {
     format: "es",
   },
+  build: {
+    outDir: "../backend/public",
+    emptyOutDir: true,
+    manifest: true,
+  },
+  json: {
+    namedExports: true,
+  },
   server: {
     host: "0.0.0.0",
     port: 4173,
     allowedHosts: ["share.werfree.fun"],
     proxy: {
       "/api": {
-        target: "http://localhost:3000",
+        target: "http://editor_backend:3001",
         changeOrigin: "true",
         secure: false,
       },
       "/socket.io": {
-        target: "http://localhost:3000",
+        target: "http://editor_backend:3001",
         secure: false,
         ws: true,
       },
     },
   },
-  build:{
-    manifest:true
-  },
   preview: {
     host: "0.0.0.0",
     port: 4173,
-    allowedHosts: ["share.werfree.fun"] // ✅ Add your domain here
-  }
+    allowedHosts: ["share.werfree.fun"], // ✅ Add your domain here
+  },
 });

@@ -12,6 +12,7 @@
     "@testing-library/user-event": "^12.1.10",
     "@vitejs/plugin-react": "^4.3.4",
     "axios": "^0.21.1",
+    "base64-arraybuffer": "^1.0.2",
     "flowbite": "^3.1.2",
     "monaco-editor": "^0.52.2",
     "monaco-themes": "^0.4.4",

@@ -23,8 +23,11 @@ import { Dropdown as FlowDropDown } from "flowbite";
 import { MdPeople } from "react-icons/md";
 import HeaderButton from "../component/HeaderButton";
 import * as Y from "yjs";
+import { decodeYJSMessage, encodeYJSMessage } from "../utils/crypt";
+import { Snackbar } from "@material-ui/core";
 
 const doc = new Y.Doc();
+const yText = doc.getText("code");
 
 export default function EditorScreen() {
   const location = useLocation();
@@ -39,6 +42,7 @@ export default function EditorScreen() {
   const [editorId, setEditorId] = useState("");
   const [clientId, setClientId] = useState("");
   const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState("");
   const webSocket = useRef();
   const clientIdRef = useRef("");
   const editorIdRef = useRef("");
@@ -54,8 +58,9 @@ export default function EditorScreen() {
     language: "plaintext",
     name: "Plain Text",
     comment: `${commentForLanguage("plaintext")}`,
-    value: null,
   });
+
+  const [code, setCode] = useState("");
 
   useEffect(() => {
     editorIdRef.current = editorId;
@@ -68,6 +73,14 @@ export default function EditorScreen() {
   useEffect(() => {
     languageRef.current = language;
   }, [language]);
+
+  useEffect(() => {
+    const observer = () => {
+      setCode(yText.toString());
+    };
+    yText.observe(observer);
+    return () => yText.unobserve(observer);
+  }, [yText]);
 
   const setUpWS = (joinEditorId, clientName) => {
     const ws = createWebSocket();
@@ -122,31 +135,52 @@ export default function EditorScreen() {
       if (message.type === "changeEditor") {
         const data = message.message;
         console.log(data, language);
-
-        setLanguage({
-          ...language,
-          language: data.language,
-          comment: `${commentForLanguage(data.language ?? language)}`,
-          value: data.code,
-          name: getLanguageName(data.language),
-        });
+        if (data.codeChange) {
+          const update = new Uint8Array(decodeYJSMessage(data.codeChange));
+          Y.applyUpdate(doc, update);
+        } else {
+          setLanguage({
+            ...language,
+            language: data.language,
+            comment: `${commentForLanguage(data.language ?? language)}`,
+            name: getLanguageName(data.language),
+          });
+        }
       }
 
       if (message.type === "join") {
         console.log("New User Joined");
+
+        if (message?.clientName) {
+          setToastMessage(`${message.clientName} joined the board`);
+        }
 
         webSocket.current?.send(
           JSON.stringify({
             type: "editorChange",
             clientId: clientIdRef.current,
             editorId: editorIdRef.current,
-            code: languageRef.current.value,
+            code: code,
+            codeChange: encodeYJSMessage(Y.encodeStateAsUpdate(doc)),
             language: languageRef.current.language,
             name: languageRef.current.name,
           })
         );
       }
     };
+
+    doc.on("update", (update) => {
+      ws.send(
+        JSON.stringify({
+          type: "editorChange",
+          clientId: clientIdRef.current,
+          editorId: editorIdRef.current,
+          code: code,
+          codeChange: encodeYJSMessage(update),
+          language: languageRef.current.language,
+        })
+      );
+    });
   };
 
   useEffect(() => {
@@ -232,17 +266,21 @@ export default function EditorScreen() {
   }, [theme]);
 
   const onEditorChange = (value, event) => {
-    setLanguage({ ...language, value: value });
+    doc.transact(() => {
+      yText.delete(0, yText.length); // Delete old text
+      yText.insert(0, value); // Insert new text
+    });
+    // setLanguage({ ...language, value: value });
     console.log("onEditorChange", value, webSocket.current);
-    webSocket.current.send(
-      JSON.stringify({
-        type: "editorChange",
-        clientId,
-        editorId,
-        code: value,
-        language: language.language,
-      })
-    );
+    // webSocket.current.send(
+    //   JSON.stringify({
+    //     type: "editorChange",
+    //     clientId,
+    //     editorId,
+    //     code: value,
+    //     language: language.language,
+    //   })
+    // );
   };
 
   const handleEditorValidation = (markers) => {
@@ -391,8 +429,9 @@ export default function EditorScreen() {
                             language: sLang.value,
                             name: sLang.name,
                             comment: `${commentForLanguage(sLang.value)}`,
-                            value: null,
                           });
+                          yText.delete(0, yText.length);
+                          yText.insert(0, "");
                           webSocket.current.send(
                             JSON.stringify({
                               type: "editorChange",
@@ -418,7 +457,7 @@ export default function EditorScreen() {
             props={{
               text: "Join",
               image: MdPeople,
-              link: `${APP_URL}?editorId=${editorId}`,
+              link: `${APP_URL}/editor/${editorId}`,
             }}
           />
         </div>
@@ -428,7 +467,7 @@ export default function EditorScreen() {
           height="200vh"
           language={language.language}
           defaultValue={language.comment}
-          value={language.value ? language.value : language.comment}
+          value={code && code !== "" ? code : language.comment}
           onChange={onEditorChange}
           onValidate={handleEditorValidation}
           onMount={handleEditorDidMount}
@@ -436,6 +475,12 @@ export default function EditorScreen() {
             lineHeight: 20, // Increase line height
             padding: { top: 15 }, // Add margin at the top
           }}
+        />
+        <Snackbar
+          open={toastMessage.length}
+          message={toastMessage}
+          onClose={(e) => setToastMessage("")}
+          autoHideDuration={4000}
         />
       </div>
     </div>

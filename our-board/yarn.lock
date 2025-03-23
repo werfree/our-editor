@@ -1589,6 +1589,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"base64-arraybuffer@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "base64-arraybuffer@npm:1.0.2"
+  checksum: 15e6400d2d028bf18be4ed97702b11418f8f8779fb8c743251c863b726638d52f69571d4cc1843224da7838abef0949c670bde46936663c45ad078e89fee5c62
+  languageName: node
+  linkType: hard
+
 "binary-extensions@npm:^2.0.0":
   version: 2.3.0
   resolution: "binary-extensions@npm:2.3.0"
@@ -3175,6 +3182,7 @@ __metadata:
     "@vitejs/plugin-react": ^4.3.4
     autoprefixer: ^10.4.21
     axios: ^0.21.1
+    base64-arraybuffer: ^1.0.2
     flowbite: ^3.1.2
     monaco-editor: ^0.52.2
     monaco-themes: ^0.4.4

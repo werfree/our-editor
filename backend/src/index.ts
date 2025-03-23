@@ -53,6 +53,7 @@ app.post(
     }
     if (validEditor(editorId)) {
       addMemberToEditor(editorId, clientId);
+      setNameClient(clientId, clientName);
       clientJoinedOnEditor(clientId, editorId);
     } else {
       createEditor(editorId, clientId);

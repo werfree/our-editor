@@ -9,13 +9,13 @@ function LogoText() {
         onClick={() => {
           navigator("/");
         }}
-        className="text-2xl tracking-wide font-mono cursor-pointer"
+        className="text-sm md:text-2xl tracking-wide font-mono cursor-pointer"
       >
         <span className="font-bold text-white">{"< "}</span>
         <span className="font-extrabold bg-gradient-to-br    text-transparent from-red-200 via-red-300 to-yellow-200  bg-clip-text drop-shadow-md  ">
           CODE
         </span>
-        <span className="font-bold bg-gradient-to-br to-red-200 via-red-300 from-yellow-200   text-transparent bg-clip-text drop-shadow-md">
+        <span className="font-bold bg-gradient-to-br to-red-200 via-red-300 from-yellow-200   text-transparent bg-clip-text drop-shadow-md ">
           {" "}
           Link
         </span>

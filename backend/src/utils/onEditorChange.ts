@@ -8,6 +8,7 @@ const onEditorChange = (message: {
   code: string;
   language: string;
   name: string;
+  codeChange: Uint8Array;
 }) => {
   setEditorCode(message.editorId, message.code, message.language);
   const clientIds: Array<string | null> = getClientIdsForEditor(
@@ -24,6 +25,7 @@ const onEditorChange = (message: {
             language: message.language,
             code: message.code,
             name: message.name,
+            codeChange: message.codeChange,
           },
           code: 200,
         })

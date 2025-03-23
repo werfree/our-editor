@@ -6,7 +6,7 @@ export const commentForLanguage = (language) => {
   } else if (language === "html") {
     return "<!-- Write Your code -->\n";
   } else if (language === "plaintext") {
-    return "-- Write below -- ";
+    return "-- Write below -- \n";
   } else {
     return "/* Write your code */ \n";
   }

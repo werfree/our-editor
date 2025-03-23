@@ -15,5 +15,7 @@ COPY frontend/.env .env
 # Build React app
 RUN yarn build
 
+EXPOSE 3000
 EXPOSE 4173
-CMD ["yarn", "preview"]
+
+CMD ["yarn", "preview","--host","0.0.0.0"]

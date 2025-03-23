@@ -1,33 +1,35 @@
-version: "3.8"
+networks:
+  nginx-proxy_default:
+    external: true
 services:
-  backend:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    ports:
-      - "3001"
-    volumes:
-      - ./backend:/app/backend
-      - /app/backend/node_modules
-    env_file:
-      - ./backend/.env
-
   frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    ports:
-      - "3000:4137"
+    image: node:23-alpine
+    working_dir: /app
     volumes:
-      - ./frontend:/app/frontend
-      - /app/frontend/node_modules
+      - ./frontend:/app # Mount the transcode_frontend directory
+      - /app/node_modules # Separate volume for node_modules
+
+    ports:
+      - "4173:4173" # Expose Vite development server on port 5173
+    command: sh -c "yarn install && yarn run build && yarn run preview --host" # Install dependencies and start Vite
     env_file:
       - ./frontend/.env
+    networks:
+      - nginx-proxy_default
     depends_on:
       - backend
-    networks:
-      - app-network
 
-networks:
-  app-network:
-    driver: bridge
+  backend:
+    image: node:23-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app # Mount the transcode_backend directory
+      - /app/node_modules # Separate volume for node_modules
+    ports:
+      - 3001:3001 # Expose Node.js server on port 3000
+    command: sh -c "yarn && yarn start" # Install dependencies and start the Node.js server
+    # user: "root"
+    env_file:
+      - ./backend/.env
+    networks:
+      - nginx-proxy_default

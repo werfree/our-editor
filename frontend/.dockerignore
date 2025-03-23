@@ -1,2 +1,6 @@
-node_module
+node_modules
 dist
+.git
+.cache
+.DS_Store
+.yarn

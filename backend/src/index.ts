@@ -30,10 +30,6 @@ app.get(
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const boardId = generateId();
     return res.status(200).json({
-      boardId: "Sayntan",
-    });
-    console.log("boardId", boardId);
-    return res.status(200).json({
       boardId: boardId,
     });
   }

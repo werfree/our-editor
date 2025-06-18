@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid"
 
 export default (): string => {
-    return nanoid()
+    return nanoid(5);
 }

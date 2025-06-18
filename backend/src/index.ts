@@ -18,7 +18,7 @@ import path from "path";
 
 const app: express.Application = express();
 
-app.use(cors());
+app.use(cors({ origin: "https://share.werfre.fun"}));
 app.use(express.json());
 
 app.get("/api/", (req: express.Request, res: express.Response) => {
@@ -28,8 +28,13 @@ app.get("/api/", (req: express.Request, res: express.Response) => {
 app.get(
   "/api/generateEditorId",
   (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const boardId = generateId();
     return res.status(200).json({
-      boardId: generateId(),
+      boardId: "Sayntan",
+    });
+    console.log("boardId", boardId);
+    return res.status(200).json({
+      boardId: boardId,
     });
   }
 );
@@ -71,7 +76,6 @@ app.post(
 );
 
 app.use("/api/code", codeRouter);
-
 // const __filename = __;
 // const __dirname = path.dirname(__filename);
 
@@ -79,10 +83,11 @@ app.use(express.static(path.join(__dirname, "../public")));
 
 // **✅ 4️⃣ Handle React Client-Side Routing**
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "index.html"));
+  console.log(path.resolve(__dirname, "..", "public", "index.html"));
+  res.sendFile(path.resolve(__dirname, "..", "public", "index.html"));
 });
 
-const server = app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT! as unknown as number,"0.0.0.0", () => {
   console.log(`Listing on PORT: ${process.env.PORT}`);
 });
 

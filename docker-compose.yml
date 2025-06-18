@@ -11,7 +11,7 @@ services:
       # no_cache: true
     working_dir: /app
     ports:
-      - "3001:3001"
+      - "9015:3001"
     env_file:
       - ./backend/.env
     networks:
@@ -19,3 +19,4 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+    restart: unless-stopped
